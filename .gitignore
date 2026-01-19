@@ -1,0 +1,25 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE Settings
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+
+# WoW Addon Packaging & Builds
+.release/
+*.zip
+
+# Libraries
+# Uncomment the line below if you use a packager (e.g., .pkgmeta) and don't want to commit libs.
+# Libs/
+
+# Gemini Agent Files
+.geminiignore
+
+# Local Documentation
+Project.md
+Future_Work.md

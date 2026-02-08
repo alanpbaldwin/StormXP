@@ -24,12 +24,12 @@ You also have full control over:
 *   **Scale:** Resize the entire bar to match your UI scale.
 *   **Alpha:** Adjust transparency/opacity.
 *   **Textures:** Choose from any shared media status bar texture.
-*   **Colors:** Customize colors for XP, Rested XP, Quest XP, Reputation, and Honor.
+*   **Colors:** Customize colors for XP, Rested XP, Completed Quest XP, Reputation, and Honor.
 
 ### 📊 Detailed Text Elements
 StormXP features a modular text system. Each element can be independently toggled, positioned, and styled (Font, Size, Outline).
 
-*   **Percentage:** Shows current progress percentage. Includes an optional **Quest XP** projection (e.g., `50% ( +10% )`).
+*   **Percentage:** Shows current progress percentage. Includes an optional **Completed Quest XP** projection (e.g., `50% ( +10% )`) based on quests ready to turn in.
 *   **Value:** Shows raw numbers (e.g., `12,500 / 25,000`). Supports standard formatting (commas) or compact formatting (`12.5k`).
 *   **Level/Rank:** Displays "Level 80", "Valdrakken Accord 15", or "Stormwind Exalted" depending on context.
 *   **Session Stats:** Tracks your playtime, XP gained, and calculates **Time to Level (TTL)** based on your current pace. *Note: These hide automatically when not tracking XP.*

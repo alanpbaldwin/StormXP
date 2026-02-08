@@ -52,7 +52,7 @@ function StormXP:ScanQuestXP()
 
     for i = 1, numEntries do
         local info = C_QuestLog.GetInfo(i)
-        if info and not info.isHeader and not info.isHidden then
+        if info and not info.isHeader and not info.isHidden and C_QuestLog.IsComplete(info.questID) then
             local xp = GetQuestLogRewardXP(info.questID)
             if xp and xp > 0 then
                 currentQuestXP = currentQuestXP + xp

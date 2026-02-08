@@ -57,6 +57,7 @@ function StormXP:OnInitialize()
 
     self:CreateBar()
     self:RegisterChatCommand("sxp", "ChatHandler")
+    self:RegisterChatCommand("stormxp", "ChatHandler")
 end
 
 function StormXP:OnEnable()
@@ -181,7 +182,7 @@ end
 -- @return mode (string) The resolved active mode (XP, REP, HONOR, or NONE)
 function StormXP:GetModeData()
     local mode = self.db.profile.mode
-    local isMax = (UnitLevel("player") == GetMaxPlayerLevel())
+    local isMax = (UnitLevel("player") == GetMaxLevelForPlayerExpansion())
 
     -- Step 1: Resolve AUTO mode logic
     -- If AUTO, we use XP until the player hits max level, then switch to the 'endgame' preference.

@@ -243,7 +243,7 @@ function StormXP:GetOptions()
                     },
                     colorQuest = {
                         type = 'color',
-                        name = 'Quest XP Color',
+                        name = 'Completed Quest XP Color',
                         hasAlpha = true,
                         get = function(info) return unpack(self.db.profile.colorQuest) end,
                         set = function(info, r, g, b, a) self.db.profile.colorQuest = {r, g, b, a}; self:ApplySettings() end,
@@ -299,8 +299,8 @@ function StormXP:GetOptions()
                         args = GetTextOptions("textPercent", {
                             showQuestXP = {
                                 type = 'toggle',
-                                name = 'Show Quest XP',
-                                desc = 'Show projected quest XP percentage.',
+                                name = 'Show Completed Quest XP',
+                                desc = 'Show projected XP percentage from completed quests ready to turn in.',
                                 order = 1.5,
                                 get = function(info) return StormXP.db.profile.textPercent.showQuestXP end,
                                 set = function(info, val) StormXP.db.profile.textPercent.showQuestXP = val; StormXP:UpdateBar() end,

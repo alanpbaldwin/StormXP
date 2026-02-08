@@ -128,7 +128,7 @@ function StormXP:OnTooltipEnter(frame, tooltip)
 
             local r, g, b = unpack(self.db.profile.colorQuest)
 
-            tt:AddDoubleLine("Quest Projected:", string.format("+%s (+%.1f%%)", self:FormatNumber(questXP), questPct), r, g, b, 1, 1, 1)
+            tt:AddDoubleLine("Completed Quests:", string.format("+%s (+%.1f%%)", self:FormatNumber(questXP), questPct), r, g, b, 1, 1, 1)
 
         end
 

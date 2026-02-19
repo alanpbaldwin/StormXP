@@ -170,6 +170,20 @@ function StormXP:GetOptions()
                                 get = function(info) return self.db.profile.alpha end,
                                 set = function(info, val) self.db.profile.alpha = val; self:ApplySettings() end,
                             },
+                            strata = {
+                                type = 'select',
+                                name = 'Frame Strata',
+                                desc = 'Controls the draw layer of the bar relative to other UI elements.',
+                                order = 6,
+                                values = {
+                                    ["BACKGROUND"] = "Background",
+                                    ["LOW"] = "Low",
+                                    ["MEDIUM"] = "Medium",
+                                    ["HIGH"] = "High",
+                                },
+                                get = function(info) return self.db.profile.strata end,
+                                set = function(info, val) self.db.profile.strata = val; self:ApplySettings() end,
+                            },
                         }
                     },
                     position = {
@@ -349,7 +363,15 @@ function StormXP:GetOptions()
                         type = 'group',
                         name = 'Level Time',
                         order = 5,
-                        args = GetTextOptions("textLevelTime")
+                        args = GetTextOptions("textLevelTime", {
+                            label = {
+                                type = 'input',
+                                name = 'Label',
+                                order = 0.5,
+                                get = function(info) return StormXP.db.profile.labels.levelTime end,
+                                set = function(info, val) StormXP.db.profile.labels.levelTime = val; StormXP:UpdateBar() end,
+                            }
+                        })
                     },
                     ttl = {
                         type = 'group',

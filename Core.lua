@@ -1,5 +1,29 @@
 local StormXP = LibStub("AceAddon-3.0"):NewAddon("StormXP", "AceEvent-3.0", "AceConsole-3.0", "AceTimer-3.0")
 
+-- Cache frequently used globals
+local GetTime = GetTime
+local UnitXP = UnitXP
+local UnitXPMax = UnitXPMax
+local UnitLevel = UnitLevel
+local UnitHonor = UnitHonor
+local UnitHonorMax = UnitHonorMax
+local UnitHonorLevel = UnitHonorLevel
+local GetMaxLevelForPlayerExpansion = GetMaxLevelForPlayerExpansion
+local RequestTimePlayed = RequestTimePlayed
+local C_Reputation = C_Reputation
+local C_MajorFactions = C_MajorFactions
+local string_format = string.format
+
+-- Addon Compartment handler (must be global per TOC spec)
+function StormXP_OnAddonCompartmentClick(_, button)
+    if button == "RightButton" then
+        StormXP:ChatHandler()
+    else
+        StormXP.db.profile.enabled = not StormXP.db.profile.enabled
+        StormXP:ApplySettings()
+    end
+end
+
 function StormXP:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("StormXPDB", self.defaults, true)
     self.db.RegisterCallback(self, "OnProfileChanged", "ApplySettings")
@@ -127,7 +151,7 @@ function StormXP:UpdateTimers()
     if isXP and self.db.profile.textLevelTime.enabled then
         local elapsedSinceUpdate = GetTime() - self.levelTime.lastUpdate
         local currentLevelTime = self.levelTime.level + elapsedSinceUpdate
-        self.levelTimeText:SetText(self.db.profile.labels.level .. self:FormatTime(currentLevelTime))
+        self.levelTimeText:SetText(self.db.profile.labels.levelTime .. self:FormatTime(currentLevelTime))
         self.levelTimeText:Show()
     else
         self.levelTimeText:Hide()
@@ -159,13 +183,13 @@ function StormXP:UpdateLDB()
     local pct = (max > 0) and (curr / max) * 100 or 0
     
     if mode == "XP" then
-        self.ldb.text = string.format("%.1f%%", pct)
+        self.ldb.text = string_format("%.1f%%", pct)
         self.ldb.icon = "Interface\\Icons\\inv_misc_book_09"
     elseif mode == "REP" then
-        self.ldb.text = string.format("%s: %.1f%%", label, pct)
+        self.ldb.text = string_format("%s: %.1f%%", label, pct)
         self.ldb.icon = "Interface\\Icons\\achievement_reputation_01"
     elseif mode == "HONOR" then
-        self.ldb.text = string.format("%s: %.1f%%", label, pct)
+        self.ldb.text = string_format("%s: %.1f%%", label, pct)
         self.ldb.icon = "Interface\\Icons\\achievement_pvp_o_15"
     else
         self.ldb.text = "StormXP"
@@ -188,6 +212,9 @@ function StormXP:GetModeData()
     -- If AUTO, we use XP until the player hits max level, then switch to the 'endgame' preference.
     if mode == "AUTO" then
         if isMax then
+            if self.db.profile.autoHideMax then
+                return 0, 1, "", {0,0,0,0}, false, false, "NONE"
+            end
             mode = self.db.profile.endgame -- Resolves to REP, HONOR, or NONE
         else
             mode = "XP"
@@ -240,7 +267,7 @@ function StormXP:GetModeData()
     elseif mode == "XP" then
         curr = UnitXP("player")
         max = UnitXPMax("player")
-        label = string.format("%s%d", self.db.profile.labels.level, UnitLevel("player"))
+        label = string_format("%s%d", self.db.profile.labels.level, UnitLevel("player"))
         color = self.db.profile.colorXP
         showRested = true
         showQuest = true

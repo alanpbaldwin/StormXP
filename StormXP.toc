@@ -1,10 +1,12 @@
-## Interface: 110207, 120000
+## Interface: 120001
 ## Title: StormXP
 ## Notes: Configurable Experience Bar with Session Tracking
 ## Author: Stormhammer
 ## Version: 1.0
 ## SavedVariables: StormXPDB
 ## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDataBroker-1.1
+## IconTexture: 894556
+## AddonCompartmentFunc: StormXP_OnAddonCompartmentClick
 ## X-Embeds: Ace3
 
 embeds.xml

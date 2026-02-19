@@ -1,193 +1,122 @@
 local StormXP = LibStub("AceAddon-3.0"):GetAddon("StormXP")
 
+-- Cache frequently used globals
+local GetTime = GetTime
+local GetXPExhaustion = GetXPExhaustion
+local UnitXP = UnitXP
+local UnitXPMax = UnitXPMax
+local UnitLevel = UnitLevel
+local UnitName = UnitName
+local UnitClass = UnitClass
+local UnitHonor = UnitHonor
+local UnitHonorMax = UnitHonorMax
+local UnitHonorLevel = UnitHonorLevel
+local C_Reputation = C_Reputation
+local CreateFrame = CreateFrame
+local GameTooltip = GameTooltip
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS
+local unpack = unpack
+local ipairs = ipairs
+local math_min = math.min
+local math_abs = math.abs
+local string_format = string.format
+
 -----------------------------------------------------------------------
 -- FRAME CREATION
 -----------------------------------------------------------------------
 
 function StormXP:OnTooltipEnter(frame, tooltip)
-
     local tt = tooltip or GameTooltip
 
-    
-
     if not tooltip then
-
         if not self.db.profile.showTooltip then return end
-
         tt:SetOwner(frame, "ANCHOR_CURSOR")
-
     end
 
-
-
     local name = UnitName("player")
-
     local _, class = UnitClass("player")
-
     local color = RAID_CLASS_COLORS[class] or {r=1, g=1, b=1}
-
-    tt:AddLine(name, color.r, color.g, color.b) 
-
-    
+    tt:AddLine(name, color.r, color.g, color.b)
 
     local level = UnitLevel("player")
-
     tt:AddLine("Level " .. level, 1, 1, 1)
-
-    
 
     local _, _, _, _, _, _, mode = self:GetModeData()
 
-    
-
     tt:AddLine(" ") -- Spacer
 
-    
-
     if mode == "REP" then
-
         local data = C_Reputation.GetWatchedFactionData()
-
         if data then
-
             local rankName = _G["FACTION_STANDING_LABEL"..data.reaction] or "Unknown"
-
             local curr = data.currentReactionThreshold
-
             local max = data.nextReactionThreshold
-
             local pct = (max > 0) and (curr / max) * 100 or 0
 
-            
-
             tt:AddLine(data.name, 1, 0.82, 0) -- Faction Name
-
             tt:AddDoubleLine("Rank:", rankName, 1, 1, 1, 1, 1, 1)
-
-            tt:AddDoubleLine("Progress:", string.format("%s / %s (%.1f%%)", self:FormatNumber(curr), self:FormatNumber(max), pct), 1, 1, 1, 1, 1, 1)
-
+            tt:AddDoubleLine("Progress:", string_format("%s / %s (%.1f%%)", self:FormatNumber(curr), self:FormatNumber(max), pct), 1, 1, 1, 1, 1, 1)
         else
-
             tt:AddLine("No Faction Watched", 1, 0, 0)
-
         end
-
     elseif mode == "HONOR" then
-
         local curr = UnitHonor("player")
-
         local max = UnitHonorMax("player")
-
         local honorLevel = UnitHonorLevel("player")
-
         local pct = (max > 0) and (curr / max) * 100 or 0
 
-        
-
         tt:AddLine("Honor", 1, 0.82, 0)
-
         tt:AddDoubleLine("Honor Level:", honorLevel, 1, 1, 1, 1, 1, 1)
-
-        tt:AddDoubleLine("Progress:", string.format("%s / %s (%.1f%%)", self:FormatNumber(curr), self:FormatNumber(max), pct), 1, 1, 1, 1, 1, 1)
-
+        tt:AddDoubleLine("Progress:", string_format("%s / %s (%.1f%%)", self:FormatNumber(curr), self:FormatNumber(max), pct), 1, 1, 1, 1, 1, 1)
     else
-
         -- XP Mode
-
         local currXP = UnitXP("player")
-
         local maxXP = UnitXPMax("player")
-
         local restedXP = GetXPExhaustion() or 0
-
         local questXP = self.questXP
-
         local pct = (maxXP > 0) and (currXP / maxXP) * 100 or 0
 
-        
-
-        tt:AddDoubleLine("Experience:", string.format("%s / %s (%.1f%%)", self:FormatNumber(currXP), self:FormatNumber(maxXP), pct), 1, 1, 1, 1, 1, 1)
-
-        
+        tt:AddDoubleLine("Experience:", string_format("%s / %s (%.1f%%)", self:FormatNumber(currXP), self:FormatNumber(maxXP), pct), 1, 1, 1, 1, 1, 1)
 
         if restedXP > 0 then
-
             local restedPct = (maxXP > 0) and (restedXP / maxXP) * 100 or 0
-
             local r, g, b = unpack(self.db.profile.colorRested)
-
-            tt:AddDoubleLine("Rested:", string.format("%s (%.1f%%)", self:FormatNumber(restedXP), restedPct), r, g, b, 1, 1, 1)
-
+            tt:AddDoubleLine("Rested:", string_format("%s (%.1f%%)", self:FormatNumber(restedXP), restedPct), r, g, b, 1, 1, 1)
         end
-
-        
 
         if questXP > 0 then
-
             local questPct = (maxXP > 0) and (questXP / maxXP) * 100 or 0
-
             local r, g, b = unpack(self.db.profile.colorQuest)
-
-            tt:AddDoubleLine("Completed Quests:", string.format("+%s (+%.1f%%)", self:FormatNumber(questXP), questPct), r, g, b, 1, 1, 1)
-
+            tt:AddDoubleLine("Completed Quests:", string_format("+%s (+%.1f%%)", self:FormatNumber(questXP), questPct), r, g, b, 1, 1, 1)
         end
-
     end
 
-    
-
     tt:AddLine(" ")
-
     tt:AddLine("Session Statistics", 1, 0.82, 0)
 
-    
-
     local duration = GetTime() - self.session.startTime
-
     local xpPerHour = 0
-
     if duration > 0 then xpPerHour = (self.session.gained / duration) * 3600 end
-
-    
 
     tt:AddDoubleLine("Time Played:", self:FormatTime(duration), 1, 1, 1, 1, 1, 1)
 
-    
-
     -- Only show XP Gained/TTL if in XP mode
-
     if mode == "XP" or mode == "NONE" then
-
         tt:AddDoubleLine("XP Gained:", self:FormatNumber(self.session.gained), 1, 1, 1, 1, 1, 1)
-
         tt:AddDoubleLine("XP / Hour:", self:FormatNumber(xpPerHour), 1, 1, 1, 1, 1, 1)
 
-        
-
         if xpPerHour > 0 then
-
             local currXP = UnitXP("player")
-
             local maxXP = UnitXPMax("player")
-
             local needed = maxXP - currXP
-
             local ttl = (needed / xpPerHour) * 3600
-
             tt:AddDoubleLine("Time to Level:", self:FormatTime(ttl), 1, 1, 1, 1, 1, 1)
-
         else
-
             tt:AddDoubleLine("Time to Level:", "N/A", 1, 1, 1, 0.5, 0.5, 0.5)
-
         end
-
     end
 
-    
-
     tt:Show()
-
 end
 
 function StormXP:CreateBar()
@@ -284,7 +213,7 @@ function StormXP:UpdateSegments()
         -- Check Major
         -- Floating point modulo safety: check if remainder is very small or very close to step
         local rem = p % db.majorStep
-        local isMajor = db.major and (rem < 0.1 or math.abs(rem - db.majorStep) < 0.1)
+        local isMajor = db.major and (rem < 0.1 or math_abs(rem - db.majorStep) < 0.1)
 
         if isMajor then
             line:SetWidth(db.widthMajor or 2)
@@ -313,6 +242,7 @@ function StormXP:ApplySettings()
 
     self.frame:SetScale(db.scale)
     self.frame:SetAlpha(db.alpha)
+    self.frame:SetFrameStrata(db.strata)
 
     -- Lock Logic
     self.frame:EnableMouse(true) -- Always enabled for Tooltips
@@ -376,7 +306,7 @@ function StormXP:UpdateStatusBars(curr, max, barColor, showRested, showQuest)
         local restedXP = GetXPExhaustion() or 0
         self.barRested:Show()
         self.barRested:SetMinMaxValues(0, max)
-        self.barRested:SetValue(math.min(max, curr + restedXP))
+        self.barRested:SetValue(math_min(max, curr + restedXP))
     else
         self.barRested:Hide()
     end
@@ -385,7 +315,7 @@ function StormXP:UpdateStatusBars(curr, max, barColor, showRested, showQuest)
         local questXP = self.questXP
         self.barQuest:Show()
         self.barQuest:SetMinMaxValues(0, max)
-        self.barQuest:SetValue(math.min(max, curr + questXP))
+        self.barQuest:SetValue(math_min(max, curr + questXP))
     else
         self.barQuest:Hide()
     end
@@ -409,7 +339,7 @@ end
 
 function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
     self.levelText:SetText(label)
-    self.rawText:SetText(string.format("%s / %s", self:FormatNumber(curr), self:FormatNumber(max)))
+    self.rawText:SetText(string_format("%s / %s", self:FormatNumber(curr), self:FormatNumber(max)))
 
     local pct = (curr / max) * 100
     local showQuestText = showQuest and self.db.profile.textPercent.showQuestXP
@@ -418,12 +348,12 @@ function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
         local questXP = self.questXP
         if questXP > 0 then
             local questPct = (questXP / max) * 100
-            self.percentText:SetText(string.format("%.1f%% (%.1f%%)", pct, questPct))
+            self.percentText:SetText(string_format("%.1f%% (%.1f%%)", pct, questPct))
         else
-            self.percentText:SetText(string.format("%.1f%%", pct))
+            self.percentText:SetText(string_format("%.1f%%", pct))
         end
     else
-        self.percentText:SetText(string.format("%.1f%%", pct))
+        self.percentText:SetText(string_format("%.1f%%", pct))
     end
 
     if showRested and self.db.profile.textRested.enabled then
@@ -437,7 +367,7 @@ function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
             local hexBar = self:DecToHex(rBar, gBar, bBar)
             local hexVal = self:DecToHex(rVal, gVal, bVal)
 
-            self.restedText:SetText(string.format("|cff%s%s|r|cff%s%.0f%%|r",
+            self.restedText:SetText(string_format("|cff%s%s|r|cff%s%.0f%%|r",
                 hexBar, self.db.profile.labels.rested, hexVal, restedPct))
         else
             self.restedText:Hide()

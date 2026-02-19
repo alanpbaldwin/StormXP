@@ -1,8 +1,17 @@
 local StormXP = LibStub("AceAddon-3.0"):GetAddon("StormXP")
 local LSM = LibStub("LibSharedMedia-3.0")
 
+-- Cache frequently used globals
+local tostring = tostring
+local math_huge = math.huge
+local math_floor = math.floor
+local string_format = string.format
+local string_gsub = string.gsub
+local C_QuestLog = C_QuestLog
+local GetQuestLogRewardXP = GetQuestLogRewardXP
+
 function StormXP:DecToHex(r, g, b)
-    return string.format("%02x%02x%02x", (r or 1)*255, (g or 1)*255, (b or 1)*255)
+    return string_format("%02x%02x%02x", (r or 1)*255, (g or 1)*255, (b or 1)*255)
 end
 
 function StormXP:GetMedia(mediaType, name)
@@ -21,9 +30,9 @@ function StormXP:FormatNumber(number)
     local fmt = self.db.profile.textRaw.format
 
     if fmt == "COMPACT" then
-        if number >= 1000000000 then return string.format("%.1fB", number / 1000000000) end
-        if number >= 1000000 then return string.format("%.1fM", number / 1000000) end
-        if number >= 1000 then return string.format("%.1fK", number / 1000) end
+        if number >= 1000000000 then return string_format("%.1fB", number / 1000000000) end
+        if number >= 1000000 then return string_format("%.1fM", number / 1000000) end
+        if number >= 1000 then return string_format("%.1fK", number / 1000) end
         return tostring(number)
     end
 
@@ -33,17 +42,17 @@ function StormXP:FormatNumber(number)
     local formatted = tostring(number)
     local k
     while true do
-        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1'..sep..'%2')
+        formatted, k = string_gsub(formatted, "^(-?%d+)(%d%d%d)", '%1'..sep..'%2')
         if k == 0 then break end
     end
     return formatted
 end
 
 function StormXP:FormatTime(seconds)
-    if seconds == math.huge then return "Inf" end
-    if seconds < 60 then return string.format("%ds", seconds) end
-    if seconds < 3600 then return string.format("%dm %ds", math.floor(seconds/60), seconds % 60) end
-    return string.format("%dh %dm", math.floor(seconds/3600), math.floor((seconds % 3600)/60))
+    if seconds == math_huge then return "Inf" end
+    if seconds < 60 then return string_format("%ds", seconds) end
+    if seconds < 3600 then return string_format("%dm %ds", math_floor(seconds/60), seconds % 60) end
+    return string_format("%dh %dm", math_floor(seconds/3600), math_floor((seconds % 3600)/60))
 end
 
 function StormXP:ScanQuestXP()

@@ -47,13 +47,6 @@ StormXP.defaults = {
         colorHonor = CONSTANTS.COLOR_HONOR,
         colorBack = CONSTANTS.COLOR_BACK,
 
-        -- Session Data
-        session = {
-            gainedXP = 0,
-            startTime = 0,
-            startXP = 0,
-        },
-
         -- Text Elements
         textLevel = {
             enabled = true,
@@ -136,6 +129,7 @@ StormXP.defaults = {
         -- Custom Labels
         labels = {
             level = "Level ",
+            levelTime = "Level Time: ",
             session = "Session: ",
             ttl = "TTL: ",
             rested = "Rested: ",

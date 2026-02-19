@@ -21,6 +21,23 @@ local math_min = math.min
 local math_abs = math.abs
 local string_format = string.format
 
+--- Applies font, color, and anchor settings to a single text element.
+local function ApplyText(self, str, cfg)
+    if cfg.enabled then
+        str:Show()
+        str:SetFont(self:GetMedia("font", cfg.font), cfg.size, cfg.outline)
+        -- Only set base color if NOT rested text (which uses split coloring)
+        if str ~= self.restedText then
+            str:SetTextColor(unpack(cfg.color))
+        end
+        str:ClearAllPoints()
+        -- Always anchor to barXP to ensure relative positioning works with the parent
+        str:SetPoint(cfg.point, self.barXP, cfg.relPoint or cfg.point, cfg.x, cfg.y)
+    else
+        str:Hide()
+    end
+end
+
 -----------------------------------------------------------------------
 -- FRAME CREATION
 -----------------------------------------------------------------------
@@ -290,29 +307,13 @@ function StormXP:ApplySettings()
     self.barQuest:SetStatusBarColor(unpack(db.colorQuest))
 
     -- Apply Text Settings
-    local function ApplyText(str, cfg)
-        if cfg.enabled then
-            str:Show()
-            str:SetFont(self:GetMedia("font", cfg.font), cfg.size, cfg.outline)
-            -- Only set base color if NOT rested text (which uses split coloring)
-            if str ~= self.restedText then
-                str:SetTextColor(unpack(cfg.color))
-            end
-            str:ClearAllPoints()
-            -- Always anchor to barXP to ensure relative positioning works with the parent
-            str:SetPoint(cfg.point, self.barXP, cfg.relPoint or cfg.point, cfg.x, cfg.y)
-        else
-            str:Hide()
-        end
-    end
-
-    ApplyText(self.levelText, db.textLevel)
-    ApplyText(self.percentText, db.textPercent)
-    ApplyText(self.rawText, db.textRaw)
-    ApplyText(self.sessionText, db.textSession)
-    ApplyText(self.levelTimeText, db.textLevelTime)
-    ApplyText(self.ttlText, db.textTTL)
-    ApplyText(self.restedText, db.textRested)
+    ApplyText(self, self.levelText, db.textLevel)
+    ApplyText(self, self.percentText, db.textPercent)
+    ApplyText(self, self.rawText, db.textRaw)
+    ApplyText(self, self.sessionText, db.textSession)
+    ApplyText(self, self.levelTimeText, db.textLevelTime)
+    ApplyText(self, self.ttlText, db.textTTL)
+    ApplyText(self, self.restedText, db.textRested)
 
     -- Cache Hex Colors for Rested Text
     local rBar, gBar, bBar = unpack(db.colorRested)

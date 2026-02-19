@@ -159,7 +159,7 @@ function StormXP:UpdateTimers()
     -- 1. Session Time (Total time since login or reset)
     if isXP and self.db.profile.textSession.enabled then
         local sessionDur = now - self.session.startTime
-        self.sessionText:SetText(self.db.profile.labels.session .. self:FormatTime(sessionDur))
+        self.sessionText:SetText(string_format("%s%s", self.db.profile.labels.session, self:FormatTime(sessionDur)))
         self.sessionText:Show()
     else
         self.sessionText:Hide()
@@ -169,7 +169,7 @@ function StormXP:UpdateTimers()
     if isXP and self.db.profile.textLevelTime.enabled then
         local elapsedSinceUpdate = now - self.levelTime.lastUpdate
         local currentLevelTime = self.levelTime.level + elapsedSinceUpdate
-        self.levelTimeText:SetText(self.db.profile.labels.levelTime .. self:FormatTime(currentLevelTime))
+        self.levelTimeText:SetText(string_format("%s%s", self.db.profile.labels.levelTime, self:FormatTime(currentLevelTime)))
         self.levelTimeText:Show()
     else
         self.levelTimeText:Hide()
@@ -184,9 +184,9 @@ function StormXP:UpdateTimers()
             local maxXP = UnitXPMax("player")
             local needed = maxXP - currXP
             local ttl = (needed / xph) * 3600
-            self.ttlText:SetText(self.db.profile.labels.ttl .. self:FormatTime(ttl))
+            self.ttlText:SetText(string_format("%s%s", self.db.profile.labels.ttl, self:FormatTime(ttl)))
         else
-             self.ttlText:SetText(self.db.profile.labels.ttl .. "...")
+            self.ttlText:SetText(string_format("%s...", self.db.profile.labels.ttl))
         end
         self.ttlText:Show()
     else
@@ -279,7 +279,7 @@ function StormXP:GetModeData()
     elseif mode == "HONOR" then
         curr = UnitHonor("player")
         max = UnitHonorMax("player")
-        label = "Honor " .. UnitHonorLevel("player")
+        label = string_format("Honor %d", UnitHonorLevel("player"))
         color = self.db.profile.colorHonor
         showRested = false
         showQuest = false
@@ -351,6 +351,11 @@ end
 function StormXP:UpdateQuestXP()
     self.questXP = self:ScanQuestXP()
     self:UpdateBar()
+end
+
+function StormXP:OnDisable()
+    if self.timer then self:CancelTimer(self.timer); self.timer = nil end
+    if self.questTimer then self:CancelTimer(self.questTimer); self.questTimer = nil end
 end
 
 function StormXP:QUEST_LOG_UPDATE()

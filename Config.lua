@@ -68,6 +68,7 @@ local function GetTextOptions(key, extra)
     return options
 end
 
+--- Builds and returns the AceConfig options table (includes profile management).
 function StormXP:GetOptions()
     local options = {
         name = "StormXP",

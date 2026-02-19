@@ -1,37 +1,36 @@
-exclude_files = {"Libs/**/*"}
+std = "lua51"
+max_line_length = false
+exclude_files = { "Libs/**/*" }
+
 read_globals = {
+    -- Ace3 / Libraries
     "LibStub",
-    "C_Reputation",
-    "C_MajorFactions",
-    "C_QuestLog",
-    "C_Timer",
-    "UnitXP",
-    "UnitXPMax",
-    "UnitLevel",
-    "GetMaxPlayerLevel",
-    "UnitHonor",
-    "UnitHonorMax",
-    "UnitHonorLevel",
-    "GetTime",
-    "CreateFrame",
-    "UIParent",
-    "GameTooltip",
-    "GetXPExhaustion",
-    "GetQuestLogRewardXP",
-    "RAID_CLASS_COLORS",
-    "UnitName",
-    "UnitClass",
-    "RequestTimePlayed",
-    "BackdropTemplateMixin",
-    "_G",
-    "strformat",
-    "math",
-    "string",
-    "table",
-    "ipairs",
-    "pairs",
-    "unpack",
-    "tostring",
-    "tonumber",
-    "print"
+
+    -- WoW Frames & UI
+    "CreateFrame", "UIParent", "GameTooltip",
+    "InCombatLockdown", "RAID_CLASS_COLORS",
+
+    -- WoW Unit API
+    "UnitXP", "UnitXPMax", "UnitLevel",
+    "UnitHonor", "UnitHonorMax", "UnitHonorLevel",
+    "UnitName", "UnitClass",
+
+    -- WoW Misc API
+    "GetTime", "GetXPExhaustion", "GetQuestLogRewardXP",
+    "GetMaxLevelForPlayerExpansion", "RequestTimePlayed",
+
+    -- C_ Namespaces
+    "C_Reputation", "C_MajorFactions", "C_QuestLog",
+}
+
+globals = {
+    "StormXP_OnAddonCompartmentClick",
+}
+
+files["Config.lua"] = {
+    ignore = { "212/info" },
+}
+
+files["Utils.lua"] = {
+    ignore = { "212/self" },
 }

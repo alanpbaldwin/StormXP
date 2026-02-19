@@ -25,6 +25,9 @@ local string_format = string.format
 -- FRAME CREATION
 -----------------------------------------------------------------------
 
+--- Populates a tooltip with player progress info.
+-- @param frame (Frame|nil) Anchor frame for GameTooltip; nil when called from LDB
+-- @param tooltip (GameTooltip|nil) External tooltip object; nil for bar hover
 function StormXP:OnTooltipEnter(frame, tooltip)
     local tt = tooltip or GameTooltip
 
@@ -48,7 +51,15 @@ function StormXP:OnTooltipEnter(frame, tooltip)
     if mode == "REP" then
         local data = C_Reputation.GetWatchedFactionData()
         if data then
-            local rankName = _G["FACTION_STANDING_LABEL"..data.reaction] or "Unknown"
+            local rankName
+            if data.reaction then
+                rankName = _G["FACTION_STANDING_LABEL"..data.reaction]
+            elseif data.isMajorFaction then
+                local majorFactionData = C_MajorFactions.GetMajorFactionData(data.factionID)
+                rankName = "Renown " .. (majorFactionData and majorFactionData.renownLevel or "??")
+            end
+            rankName = rankName or "Unknown"
+
             local curr = data.currentReactionThreshold
             local max = data.nextReactionThreshold
             local pct = (max > 0) and (curr / max) * 100 or 0
@@ -119,6 +130,7 @@ function StormXP:OnTooltipEnter(frame, tooltip)
     tt:Show()
 end
 
+--- Creates the main bar frame hierarchy (container, status bars, text, segments).
 function StormXP:CreateBar()
     -- Main Container (Movable)
     local f = CreateFrame("Frame", "StormXP_Bar", UIParent)
@@ -187,6 +199,7 @@ function StormXP:CreateBar()
     self:ApplySettings()
 end
 
+--- Renders percentage marker lines (minor and major) across the bar.
 function StormXP:UpdateSegments()
     local db = self.db.profile.segments
     local totalWidth = self.db.profile.width
@@ -204,11 +217,8 @@ function StormXP:UpdateSegments()
         local line = self.segmentLines[lineIdx]
         if not line then
             line = self.barXP:CreateTexture(nil, "OVERLAY")
-            line:SetTexture("Interface\\Buttons\\WHITE8x8")
             self.segmentLines[lineIdx] = line
         end
-
-        line:Show()
 
         -- Check Major
         -- Floating point modulo safety: check if remainder is very small or very close to step
@@ -216,24 +226,37 @@ function StormXP:UpdateSegments()
         local isMajor = db.major and (rem < 0.1 or math_abs(rem - db.majorStep) < 0.1)
 
         if isMajor then
+            line:Show()
             line:SetWidth(db.widthMajor or 2)
             line:SetColorTexture(unpack(db.colorMajor))
-        else
+        elseif db.minorEnabled then
+            line:Show()
             line:SetWidth(db.width or 1)
             line:SetColorTexture(unpack(db.color))
+        else
+            line:Hide()
         end
 
-        line:SetHeight(self.db.profile.height)
-        line:ClearAllPoints()
+        if line:IsShown() then
+            line:SetHeight(self.db.profile.height)
+            line:ClearAllPoints()
 
-        local xPos = (p / 100) * totalWidth
-        line:SetPoint("LEFT", self.barXP, "LEFT", xPos, 0)
+            local xPos = (p / 100) * totalWidth
+            line:SetPoint("LEFT", self.barXP, "LEFT", xPos, 0)
+        end
 
         lineIdx = lineIdx + 1
     end
 end
 
+--- Applies all profile settings to the bar frame and text elements.
+-- Defers to PLAYER_REGEN_ENABLED if called during combat lockdown.
 function StormXP:ApplySettings()
+    if InCombatLockdown() then
+        self.needsApplySettings = true
+        return
+    end
+
     local db = self.db.profile
 
     self.frame:SetSize(db.width, db.height)
@@ -291,19 +314,27 @@ function StormXP:ApplySettings()
     ApplyText(self.ttlText, db.textTTL)
     ApplyText(self.restedText, db.textRested)
 
+    -- Cache Hex Colors for Rested Text
+    local rBar, gBar, bBar = unpack(db.colorRested)
+    local rVal, gVal, bVal = unpack(db.textRested.color)
+    self.restedHexBar = self:DecToHex(rBar, gBar, bBar)
+    self.restedHexVal = self:DecToHex(rVal, gVal, bVal)
+
     if db.enabled then self.frame:Show() else self.frame:Hide() end
 
     self:UpdateSegments()
     self:UpdateBar()
 end
 
+--- Updates status bar values, colors, and frame levels for XP/rested/quest overlays.
 function StormXP:UpdateStatusBars(curr, max, barColor, showRested, showQuest)
     self.barXP:SetMinMaxValues(0, max)
     self.barXP:SetValue(curr)
     self.barXP:SetStatusBarColor(unpack(barColor))
 
+    local restedXP = showRested and (GetXPExhaustion() or 0) or 0
+
     if showRested then
-        local restedXP = GetXPExhaustion() or 0
         self.barRested:Show()
         self.barRested:SetMinMaxValues(0, max)
         self.barRested:SetValue(math_min(max, curr + restedXP))
@@ -324,7 +355,6 @@ function StormXP:UpdateStatusBars(curr, max, barColor, showRested, showQuest)
         local base = self.frame:GetFrameLevel()
         self.barXP:SetFrameLevel(base + 10)
 
-        local restedXP = (showRested and GetXPExhaustion()) or 0
         local questXP = (showQuest and self.questXP) or 0
 
         if restedXP < questXP then
@@ -337,6 +367,7 @@ function StormXP:UpdateStatusBars(curr, max, barColor, showRested, showQuest)
     end
 end
 
+--- Updates all text displays (level, percentage, raw XP, rested).
 function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
     self.levelText:SetText(label)
     self.rawText:SetText(string_format("%s / %s", self:FormatNumber(curr), self:FormatNumber(max)))
@@ -362,13 +393,8 @@ function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
             local restedPct = (restedXP / max) * 100
             self.restedText:Show()
 
-            local rBar, gBar, bBar = unpack(self.db.profile.colorRested)
-            local rVal, gVal, bVal = unpack(self.db.profile.textRested.color)
-            local hexBar = self:DecToHex(rBar, gBar, bBar)
-            local hexVal = self:DecToHex(rVal, gVal, bVal)
-
             self.restedText:SetText(string_format("|cff%s%s|r|cff%s%.0f%%|r",
-                hexBar, self.db.profile.labels.rested, hexVal, restedPct))
+                self.restedHexBar, self.db.profile.labels.rested, self.restedHexVal, restedPct))
         else
             self.restedText:Hide()
         end
@@ -377,24 +403,36 @@ function StormXP:UpdateTextElements(curr, max, label, showRested, showQuest)
     end
 end
 
+--- Main update orchestrator. Fetches mode data, updates bars and text.
+-- Guards Show/Hide with InCombatLockdown checks.
 function StormXP:UpdateBar()
     if not self.db.profile.enabled then
-        self.frame:Hide()
+        if InCombatLockdown() then
+            self.needsApplySettings = true
+        else
+            self.frame:Hide()
+        end
         return
     end
 
     local curr, max, label, color, showRested, showQuest, activeMode = self:GetModeData()
 
     if activeMode == "NONE" then
-        self.frame:Hide()
+        if InCombatLockdown() then
+            self.needsApplySettings = true
+        else
+            self.frame:Hide()
+        end
         return
     end
 
+    if not InCombatLockdown() then
         self.frame:Show()
-        
-        self:UpdateStatusBars(curr, max, color, showRested, showQuest)
-        self:UpdateTextElements(curr, max, label, showRested, showQuest)
-        
-        -- Update Broker Display if available
-        if self.UpdateLDB then self:UpdateLDB() end
     end
+
+    self:UpdateStatusBars(curr, max, color, showRested, showQuest)
+    self:UpdateTextElements(curr, max, label, showRested, showQuest)
+
+    -- Update Broker Display if available
+    if self.UpdateLDB then self:UpdateLDB() end
+end

@@ -8,11 +8,13 @@ local UnitLevel = UnitLevel
 local UnitHonor = UnitHonor
 local UnitHonorMax = UnitHonorMax
 local UnitHonorLevel = UnitHonorLevel
-local GetMaxLevelForPlayerExpansion = GetMaxLevelForPlayerExpansion
+local GetMaxLevelForPlayerExpansion = GetMaxLevelForPlayerExpansion or function() return 80 end
 local RequestTimePlayed = RequestTimePlayed
 local C_Reputation = C_Reputation
 local C_MajorFactions = C_MajorFactions
 local string_format = string.format
+
+local EMPTY_COLOR = {0, 0, 0, 0}
 
 -- Addon Compartment handler (must be global per TOC spec)
 function StormXP_OnAddonCompartmentClick(_, button)
@@ -29,14 +31,14 @@ function StormXP:OnInitialize()
     self.db.RegisterCallback(self, "OnProfileChanged", "ApplySettings")
     self.db.RegisterCallback(self, "OnProfileCopied", "ApplySettings")
     self.db.RegisterCallback(self, "OnProfileReset", "ApplySettings")
-    
+
     -- Register Options
     if self.GetOptions then
         LibStub("AceConfig-3.0"):RegisterOptionsTable("StormXP", self:GetOptions())
         LibStub("AceConfigDialog-3.0"):AddToBlizOptions("StormXP", "StormXP")
         LibStub("AceConfigDialog-3.0"):AddToBlizOptions("StormXP", "Profiles", "StormXP", "profiles")
     end
-    
+
     -- LDB Support
     local ldb = LibStub:GetLibrary("LibDataBroker-1.1", true)
     if ldb and self.db.profile.enableLDB then
@@ -45,26 +47,22 @@ function StormXP:OnInitialize()
             text = "StormXP",
             icon = "Interface\\Icons\\inv_misc_book_09",
             OnTooltipShow = function(tt) self:OnTooltipEnter(nil, tt) end,
-            OnClick = function(_, button) 
+            OnClick = function(_, button)
                 if button == "RightButton" then
                     self:ChatHandler() -- Open Config
                 else
-                    if self.db.profile.enabled then
-                        self.db.profile.enabled = false
-                    else
-                        self.db.profile.enabled = true
-                    end
+                    self.db.profile.enabled = not self.db.profile.enabled
                     self:ApplySettings()
                 end
             end,
         })
-        
+
         local icon = LibStub:GetLibrary("LibDBIcon-1.0", true)
         if icon then
             icon:Register("StormXP", self.ldb, self.db.profile.minimap)
         end
     end
-    
+
     -- Runtime Session Tracking
     self.session = {
         startTime = GetTime(),
@@ -91,6 +89,7 @@ function StormXP:OnEnable()
     self:RegisterEvent("QUEST_LOG_UPDATE")
     self:RegisterEvent("TIME_PLAYED_MSG")
     self:RegisterEvent("UPDATE_FACTION")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     RequestTimePlayed()
 
@@ -126,40 +125,59 @@ end
 -- LOGIC & DATA PROCESSING
 -----------------------------------------------------------------------
 
+--- Resolves the current tracking mode without fetching data.
+-- @return mode (string) "XP", "REP", "HONOR", or "NONE"
+function StormXP:GetActiveMode()
+    local mode = self.db.profile.mode
+    local isMax = (UnitLevel("player") == GetMaxLevelForPlayerExpansion())
+
+    if mode == "AUTO" then
+        if isMax then
+            if self.db.profile.autoHideMax then return "NONE" end
+            mode = self.db.profile.endgame
+        else
+            mode = "XP"
+        end
+    end
+    return mode or "NONE"
+end
+
 -- Sync player level time with server message
-function StormXP:TIME_PLAYED_MSG(event, total, level)
+function StormXP:TIME_PLAYED_MSG(_, total, level)
     self.levelTime.total = total
     self.levelTime.level = level
     self.levelTime.lastUpdate = GetTime()
 end
 
--- Periodic timer update for session-based text elements
+--- Updates session-based text elements (session time, level time, TTL).
+-- Called every 1s by ScheduleRepeatingTimer.
 function StormXP:UpdateTimers()
-    local _, _, _, _, _, _, mode = self:GetModeData()
+    local mode = self:GetActiveMode()
     local isXP = (mode == "XP")
+    local now = GetTime()
 
     -- 1. Session Time (Total time since login or reset)
     if isXP and self.db.profile.textSession.enabled then
-        local sessionDur = GetTime() - self.session.startTime
+        local sessionDur = now - self.session.startTime
         self.sessionText:SetText(self.db.profile.labels.session .. self:FormatTime(sessionDur))
         self.sessionText:Show()
     else
         self.sessionText:Hide()
     end
-    
+
     -- 2. Level Time (Total time spent on the current level)
     if isXP and self.db.profile.textLevelTime.enabled then
-        local elapsedSinceUpdate = GetTime() - self.levelTime.lastUpdate
+        local elapsedSinceUpdate = now - self.levelTime.lastUpdate
         local currentLevelTime = self.levelTime.level + elapsedSinceUpdate
         self.levelTimeText:SetText(self.db.profile.labels.levelTime .. self:FormatTime(currentLevelTime))
         self.levelTimeText:Show()
     else
         self.levelTimeText:Hide()
     end
-    
+
     -- 3. Time to Level (TTL) calculation based on session XP/hour
     if isXP and self.db.profile.textTTL.enabled then
-        local duration = GetTime() - self.session.startTime
+        local duration = now - self.session.startTime
         if self.session.gained > 0 and duration > 0 then
             local xph = (self.session.gained / duration) * 3600
             local currXP = UnitXP("player")
@@ -176,12 +194,13 @@ function StormXP:UpdateTimers()
     end
 end
 
+--- Updates the LibDataBroker data object text and icon.
 function StormXP:UpdateLDB()
     if not self.ldb then return end
-    
+
     local curr, max, label, _, _, _, mode = self:GetModeData()
     local pct = (max > 0) and (curr / max) * 100 or 0
-    
+
     if mode == "XP" then
         self.ldb.text = string_format("%.1f%%", pct)
         self.ldb.icon = "Interface\\Icons\\inv_misc_book_09"
@@ -197,7 +216,8 @@ function StormXP:UpdateLDB()
     end
 end
 
---- Calculates the data required to render the bar based on the current tracking mode.-- @return curr (number) Current value
+--- Calculates the data required to render the bar based on the current tracking mode.
+-- @return curr (number) Current value
 -- @return max (number) Maximum value
 -- @return label (string) Text for the level/faction label
 -- @return color (table) RGBA color table
@@ -213,7 +233,7 @@ function StormXP:GetModeData()
     if mode == "AUTO" then
         if isMax then
             if self.db.profile.autoHideMax then
-                return 0, 1, "", {0,0,0,0}, false, false, "NONE"
+                return 0, 1, "", EMPTY_COLOR, false, false, "NONE"
             end
             mode = self.db.profile.endgame -- Resolves to REP, HONOR, or NONE
         else
@@ -273,7 +293,7 @@ function StormXP:GetModeData()
         showQuest = true
 
     else -- "NONE" mode: Hide the bar elements
-        return 0, 1, "", {0,0,0,0}, false, false, "NONE"
+        return 0, 1, "", EMPTY_COLOR, false, false, "NONE"
     end
 
     -- Safety check to prevent division by zero in UI elements
@@ -319,6 +339,13 @@ end
 
 function StormXP:UPDATE_FACTION()
     self:UpdateBar()
+end
+
+function StormXP:PLAYER_REGEN_ENABLED()
+    if self.needsApplySettings then
+        self.needsApplySettings = nil
+        self:ApplySettings()
+    end
 end
 
 function StormXP:UpdateQuestXP()

@@ -323,6 +323,9 @@ function StormXP:ApplySettings()
 
     if db.enabled then self.frame:Show() else self.frame:Hide() end
 
+    local icon = LibStub:GetLibrary("LibDBIcon-1.0", true)
+    if icon then icon:Refresh("StormXP", db.minimap) end
+
     self:UpdateSegments()
     self:UpdateBar()
 end

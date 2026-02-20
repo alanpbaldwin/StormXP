@@ -90,6 +90,7 @@ function StormXP:OnEnable()
     self:RegisterEvent("TIME_PLAYED_MSG")
     self:RegisterEvent("UPDATE_FACTION")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
 
     RequestTimePlayed()
 
@@ -338,6 +339,10 @@ function StormXP:UPDATE_EXHAUSTION()
 end
 
 function StormXP:UPDATE_FACTION()
+    self:UpdateBar()
+end
+
+function StormXP:PLAYER_ENTERING_WORLD()
     self:UpdateBar()
 end
 

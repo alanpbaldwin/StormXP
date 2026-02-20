@@ -61,6 +61,8 @@ end
 
 --- Scans the quest log and totals XP from completed (ready to turn in) quests.
 function StormXP:ScanQuestXP()
+    if not GetQuestLogRewardXP then return 0 end
+
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
     local currentQuestXP = 0
 

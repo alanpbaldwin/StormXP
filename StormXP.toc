@@ -2,9 +2,9 @@
 ## Title: StormXP
 ## Notes: Configurable Experience Bar with Session Tracking
 ## Author: Stormhammer
-## Version: 1.0
+## Version: 1.0.0
 ## SavedVariables: StormXPDB
-## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDataBroker-1.1
+## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDataBroker-1.1, LibDBIcon-1.0
 ## IconTexture: 894556
 ## AddonCompartmentFunc: StormXP_OnAddonCompartmentClick
 ## X-Embeds: Ace3

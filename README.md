@@ -1,39 +1,38 @@
 # StormXP
 
-**StormXP** is a lightweight, highly configurable standalone Experience, Reputation, and Honor bar for World of Warcraft. It provides a clean, modern alternative to the default Blizzard status bars, offering precise control over appearance, positioning, and data tracking.
+**StormXP** is a lightweight, highly configurable standalone Experience, Reputation, and Honor bar for World of Warcraft (Retail 12.0+). It provides a clean, modern alternative to the default Blizzard status bars, offering precise control over appearance, positioning, and data tracking.
+
+## Installation
+
+Extract the `StormXP` folder into your `World of Warcraft/_retail_/Interface/AddOns/` directory and restart the game or `/reload`.
 
 ## Key Features
 
-### 🧠 Intelligent Tracking Modes
-StormXP adapts to your gameplay needs. You can force a specific tracking mode or let the addon decide for you.
+### Intelligent Tracking Modes
+*   **Auto (Default):** Tracks XP while leveling, then switches to Reputation/Renown or Honor at max level. Can auto-hide when nothing is tracked.
+*   **Experience / Reputation / Honor:** Force a specific tracking mode at any time.
 
-*   **Auto (Default):** The "Set and Forget" mode.
-    *   **While Leveling:** Tracks your Experience and Quest progress.
-    *   **At Max Level:** Automatically switches to tracking your **Watched Faction** (Reputation/Renown) or **Honor**, depending on your settings. If nothing is watched, the bar can auto-hide.
-*   **Experience:** Forces the bar to track XP, even at max level.
-*   **Reputation:** Forces the bar to track your currently watched Faction or Renown level.
-*   **Honor:** Forces the bar to track your Honor Level and progress.
+### Positioning & Visuals
+*   **Drag & Drop** or use **X/Y Offset** sliders for pixel-perfect positioning.
+*   **Scale, Alpha, Frame Strata** — full control over size, transparency, and draw layer.
+*   **Textures & Colors** — choose from any LibSharedMedia status bar texture. Customize colors for XP, Rested XP, Completed Quest XP, Reputation, Honor, and background.
+*   **Segment Markers** — configurable minor and major percentage markers across the bar.
 
-### 🎨 Positioning & Visuals
-Customize the bar to fit your UI perfectly using two methods:
+### Text Elements
+Each text element can be independently toggled, positioned, and styled (Font, Size, Outline, Color).
 
-1.  **Drag & Drop:** Unlock the frame in the options to drag it anywhere on your screen.
-2.  **Pixel-Perfect Precision:** Use the **X Offset** and **Y Offset** sliders in the configuration menu for exact positioning.
+*   **Percentage** — current progress, with optional completed quest XP projection (e.g., `50.0% (10.0%)`).
+*   **Value** — raw numbers (`12,500 / 25,000`) with configurable separator or compact format (`12.5K`).
+*   **Level/Rank** — displays level, faction standing, renown rank, or honor level.
+*   **Rested %** — shows rested XP percentage with split bar/text coloring.
+*   **Session Time, Level Time, Time to Level** — live session stats with customizable labels. Auto-hide when not tracking XP.
 
-You also have full control over:
-*   **Scale:** Resize the entire bar to match your UI scale.
-*   **Alpha:** Adjust transparency/opacity.
-*   **Textures:** Choose from any shared media status bar texture.
-*   **Colors:** Customize colors for XP, Rested XP, Completed Quest XP, Reputation, and Honor.
+### Integration
+*   **Minimap Icon** — toggle via settings. Left-click to enable/disable, right-click to open config.
+*   **Addon Compartment** — appears in the addon list dropdown on the minimap.
+*   **LibDataBroker** — data source for broker display addons (Titan Panel, Bazooka, etc.).
+*   **Profiles** — full AceDB profile support with per-character overrides.
 
-### 📊 Detailed Text Elements
-StormXP features a modular text system. Each element can be independently toggled, positioned, and styled (Font, Size, Outline).
-
-*   **Percentage:** Shows current progress percentage. Includes an optional **Completed Quest XP** projection (e.g., `50% ( +10% )`) based on quests ready to turn in.
-*   **Value:** Shows raw numbers (e.g., `12,500 / 25,000`). Supports standard formatting (commas) or compact formatting (`12.5k`).
-*   **Level/Rank:** Displays "Level 80", "Valdrakken Accord 15", or "Stormwind Exalted" depending on context.
-*   **Session Stats:** Tracks your playtime, XP gained, and calculates **Time to Level (TTL)** based on your current pace. *Note: These hide automatically when not tracking XP.*
-
-### 🖥️ Slash Commands
-*   `/sxp` — Opens the configuration menu.
-*   `/sxp reset` — Resets the current session statistics (Session Timer, XP Gained, XP/Hour).
+### Slash Commands
+*   `/sxp` or `/stormxp` — Opens the configuration menu.
+*   `/sxp reset` — Resets session statistics.
